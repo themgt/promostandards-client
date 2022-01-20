@@ -23,11 +23,12 @@ module PromoStandards
       @product_pricing_and_configuration_service_url = product_pricing_and_configuration_service_url
     end
 
-    def get_sellable_product_ids
+    def get_sellable_product_ids(version = '')
       client = build_savon_client_for_product(@product_data_service_url)
+      version = version == '2.0.0' || version == '1.0.0' ? version : '2.0.0';
       response = client.call('GetProductSellableRequest',
         message: {
-          'shar:wsVersion' => '1.0.0',
+          'shar:wsVersion' => version,
           'shar:id' => @access_id,
           'shar:password' => @password,
           'shar:isSellable' => true
@@ -40,11 +41,12 @@ module PromoStandards
         .uniq
     end
 
-    def get_product_data(product_id)
+    def get_product_data(product_id, version = '')
       client = build_savon_client_for_product(@product_data_service_url)
+      version = version == '2.0.0' || version == '1.0.0' ? version : '2.0.0';
       response = client.call('GetProductRequest',
         message: {
-          'shar:wsVersion' => '1.0.0',
+          'shar:wsVersion' => version,
           'shar:id' => @access_id,
           'shar:password' => @password,
           'shar:localizationCountry' => 'US',
@@ -62,12 +64,13 @@ module PromoStandards
       raise exception.class, "#{exception} - get_product_data failed!"
     end
 
-    def get_primary_image(product_id)
+    def get_primary_image(product_id, version = '')
       raise Promostandards::Client::NoServiceUrlError, 'Media content service URL not set!' unless @media_content_service_url
       client = build_savon_client_for_media(@media_content_service_url)
+      version = version == '1.1.0' ? version : '1.1.0';
       response = client.call('GetMediaContentRequest',
         message: {
-          'shar:wsVersion' => '1.1.0',
+          'shar:wsVersion' => version,
           'shar:id' => @access_id,
           'shar:password' => @password,
           'shar:mediaType' => 'Image',
@@ -83,12 +86,13 @@ module PromoStandards
       raise exception.class, "#{exception} - get_primary_image failed!"
     end
 
-    def get_fob_points(product_id)
+    def get_fob_points(product_id, version = '')
       raise Promostandards::Client::NoServiceUrlError, 'Product pricing and configuration service URL not set!' unless @product_pricing_and_configuration_service_url
       client = build_savon_client_for_product_pricing_and_configuration(@product_pricing_and_configuration_service_url)
+      version = version == '1.0.0' ? version : '1.0.0';
       response = client.call('GetFobPointsRequest',
         message: {
-          'shar:wsVersion' => '1.0.0',
+          'shar:wsVersion' => version,
           'shar:id' => @access_id,
           'shar:password' => @password,
           'shar:productId' => product_id,
@@ -105,12 +109,13 @@ module PromoStandards
       raise exception.class, "#{exception} - get_fob_points failed!"
     end
 
-    def get_prices(product_id, fob_id, configuration_type = 'Decorated')
+    def get_prices(product_id, fob_id, configuration_type = 'Decorated', version = '')
       raise Promostandards::Client::NoServiceUrlError, 'Product pricing and configuration service URL not set!' unless @product_pricing_and_configuration_service_url
       client = build_savon_client_for_product_pricing_and_configuration(@product_pricing_and_configuration_service_url)
+      version = version == '1.0.0' ? version : '1.0.0';
       response = client.call('GetConfigurationAndPricingRequest',
         message: {
-          'shar:wsVersion' => '1.0.0',
+          'shar:wsVersion' => version,
           'shar:id' => @access_id,
           'shar:password' => @password,
           'shar:productId' => product_id,

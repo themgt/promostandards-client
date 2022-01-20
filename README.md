@@ -36,13 +36,13 @@ client = PromoStandards::Client.new(
 )
 
 # Get sellable product ids
-product_ids = client.get_sellable_product_ids
+product_ids = client.get_sellable_product_ids('version') # pass the version e.g. 2.0.0
 
 # Get product data
-product_hash = client.get_product_data('product_id')
+product_hash = client.get_product_data('product_id', 'version')
 
 # Get primary product image
-primary_image = client.get_primary_image('product_id')
+primary_image = client.get_primary_image('product_id', 'version')
 ```
 
 ## Testing PromoStandards end points
