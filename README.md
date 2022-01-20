@@ -30,9 +30,9 @@ require 'promostandards/client.rb'
 client = PromoStandards::Client.new(
   access_id: 'YOUR ID'
   password: 'YOUR PASSWORD'
-  product_data_service_url: 'https://brandedpromoapparel.com/WebServices/ProductDataService.svc',
-  media_content_service_url: 'https://brandedpromoapparel.com/WebServices/MediaContentService.svc',
-  product_pricing_and_configuration_service_url: 'https://brandedpromoapparel.com/webservices/PricingAndConfig.svc',
+  product_data_service_url: 'https://brandedpromoapparel.com/WebServices/ProductDataService.svc'
+  media_content_service_url: 'https://brandedpromoapparel.com/WebServices/MediaContentService.svc'
+  product_pricing_and_configuration_service_url: 'https://brandedpromoapparel.com/webservices/PricingAndConfig.svc'
   inventory_service_url: 'https://brandedpromoapparel.com/WebServices/inventoryservice2.svc'
 )
 
