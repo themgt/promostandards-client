@@ -30,9 +30,10 @@ require 'promostandards/client.rb'
 client = PromoStandards::Client.new(
   access_id: 'YOUR ID'
   password: 'YOUR PASSWORD'
-  product_data_service_url: 'https://services.starline.com/CustomerProductDataService/CustomerProductDataService.svc'
-  media_content_service_url: 'https://services.starline.com/MediaContentService/MediaContentService.svc'
-  product_pricing_and_configuration_service_url: 'https://services.starline.com/ppc/PricingAndConfiguration.svc'
+  product_data_service_url: 'https://brandedpromoapparel.com/WebServices/ProductDataService.svc',
+  media_content_service_url: 'https://brandedpromoapparel.com/WebServices/MediaContentService.svc',
+  product_pricing_and_configuration_service_url: 'https://brandedpromoapparel.com/webservices/PricingAndConfig.svc',
+  inventory_service_url: 'https://brandedpromoapparel.com/WebServices/inventoryservice2.svc'
 )
 
 # Get sellable product ids
@@ -43,6 +44,9 @@ product_hash = client.get_product_data('product_id', 'version')
 
 # Get primary product image
 primary_image = client.get_primary_image('product_id', 'version')
+
+# Get product inventory
+inventory_levels = client.get_inventory_levels('product_id', 'version')
 ```
 
 ## Testing PromoStandards end points
