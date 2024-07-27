@@ -15,19 +15,21 @@ module PromoStandards
 
     PRIMARY_IMAGE_PRECEDENCE = ['1006', ['1007', '1001', '2001'], ['1007', '1001'], '1007', ['1001', '2001'], '1001', '1003']
 
-    def initialize(access_id:, password: nil, product_data_service_url:, media_content_service_url: nil, product_pricing_and_configuration_service_url: nil)
+    def initialize(access_id:, password: nil, product_data_service_url:, media_content_service_url: nil, product_pricing_and_configuration_service_url: nil, inventory_service_url: nil)
       @access_id = access_id
       @password = password
       @product_data_service_url = product_data_service_url
       @media_content_service_url = media_content_service_url
       @product_pricing_and_configuration_service_url = product_pricing_and_configuration_service_url
+      @inventory_service_url = inventory_service_url
     end
 
-    def get_sellable_product_ids
+    def get_sellable_product_ids(version = '')
       client = build_savon_client_for_product(@product_data_service_url)
+      version = version == '2.0.0' || version == '1.0.0' ? version : '2.0.0';
       response = client.call('GetProductSellableRequest',
         message: {
-          'shar:wsVersion' => '1.0.0',
+          'shar:wsVersion' => version,
           'shar:id' => @access_id,
           'shar:password' => @password,
           'shar:isSellable' => true
@@ -40,11 +42,42 @@ module PromoStandards
         .uniq
     end
 
-    def get_product_data(product_id)
+    def get_inventory_levels(product_id, version = '')
+      raise Promostandards::Client::NoServiceUrlError, 'Inventory service URL not set!' unless @inventory_service_url
+      client = build_savon_client_for_inventory(@inventory_service_url)
+      version = version == '2.0.0' || version == '1.2.1' ? version : '2.0.0';
+      response = client.call('GetFilterValuesRequest',
+        message: {
+          'shar:wsVersion' => version,
+          'shar:id' => @access_id,
+          'shar:password' => @password,
+          'shar:productId' => product_id
+        },
+        soap_action: 'getFilterValues'
+      )
+      filter_hash = response.body.dig(:get_inventory_levels_response, :filter_values, :filter)
+      result = client.call('GetInventoryLevelsRequest',
+        message: {
+          'shar:wsVersion' => version,
+          'shar:id' => @access_id,
+          'shar:password' => @password,
+          'shar:productId' => product_id,
+          'shar:filter' => filter_hash
+        },
+        soap_action: 'getInventoryLevels'
+      )
+      inventory_hash = result.body.dig(:get_inventory_levels_response, :inventory, :part_inventory_array, :part_inventory)
+      inventory_hash
+    rescue => exception
+      raise exception.class, "#{exception} - get_inventory_levels failed!"
+    end
+
+    def get_product_data(product_id, version = '')
       client = build_savon_client_for_product(@product_data_service_url)
+      version = version == '2.0.0' || version == '1.0.0' ? version : '2.0.0';
       response = client.call('GetProductRequest',
         message: {
-          'shar:wsVersion' => '1.0.0',
+          'shar:wsVersion' => version,
           'shar:id' => @access_id,
           'shar:password' => @password,
           'shar:localizationCountry' => 'US',
@@ -62,12 +95,13 @@ module PromoStandards
       raise exception.class, "#{exception} - get_product_data failed!"
     end
 
-    def get_primary_image(product_id)
+    def get_primary_image(product_id, version = '')
       raise Promostandards::Client::NoServiceUrlError, 'Media content service URL not set!' unless @media_content_service_url
       client = build_savon_client_for_media(@media_content_service_url)
+      version = version == '1.1.0' ? version : '1.1.0';
       response = client.call('GetMediaContentRequest',
         message: {
-          'shar:wsVersion' => '1.1.0',
+          'shar:wsVersion' => version,
           'shar:id' => @access_id,
           'shar:password' => @password,
           'shar:mediaType' => 'Image',
@@ -83,12 +117,13 @@ module PromoStandards
       raise exception.class, "#{exception} - get_primary_image failed!"
     end
 
-    def get_fob_points(product_id)
+    def get_fob_points(product_id, version = '')
       raise Promostandards::Client::NoServiceUrlError, 'Product pricing and configuration service URL not set!' unless @product_pricing_and_configuration_service_url
       client = build_savon_client_for_product_pricing_and_configuration(@product_pricing_and_configuration_service_url)
+      version = version == '1.0.0' ? version : '1.0.0';
       response = client.call('GetFobPointsRequest',
         message: {
-          'shar:wsVersion' => '1.0.0',
+          'shar:wsVersion' => version,
           'shar:id' => @access_id,
           'shar:password' => @password,
           'shar:productId' => product_id,
@@ -105,12 +140,13 @@ module PromoStandards
       raise exception.class, "#{exception} - get_fob_points failed!"
     end
 
-    def get_prices(product_id, fob_id, configuration_type = 'Decorated')
+    def get_prices(product_id, fob_id, configuration_type = 'Decorated', version = '')
       raise Promostandards::Client::NoServiceUrlError, 'Product pricing and configuration service URL not set!' unless @product_pricing_and_configuration_service_url
       client = build_savon_client_for_product_pricing_and_configuration(@product_pricing_and_configuration_service_url)
+      version = version == '1.0.0' ? version : '1.0.0';
       response = client.call('GetConfigurationAndPricingRequest',
         message: {
-          'shar:wsVersion' => '1.0.0',
+          'shar:wsVersion' => version,
           'shar:id' => @access_id,
           'shar:password' => @password,
           'shar:productId' => product_id,
@@ -141,6 +177,16 @@ module PromoStandards
         namespace: 'http://www.promostandards.org/WSDL/ProductDataService/1.0.0/',
         namespaces: {
           'xmlns:shar' => 'http://www.promostandards.org/WSDL/ProductDataService/1.0.0/SharedObjects/'
+        }
+      )
+    end
+
+    def build_savon_client_for_inventory(service_url)
+      Savon.client COMMON_SAVON_CLIENT_CONFIG.merge(
+        endpoint: service_url,
+        namespace: 'http://www.promostandards.org/WSDL/Inventory/2.0.0/',
+        namespaces: {
+          'xmlns:shar' => 'http://www.promostandards.org/WSDL/Inventory/2.0.0/SharedObjects/'
         }
       )
     end
